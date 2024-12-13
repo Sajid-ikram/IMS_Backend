@@ -1,0 +1,137 @@
+Registration: http://localhost:3001/api/users
+Type: POST
+Saves in users table
+
+Requst:
+{
+  "name": "Test User",
+  "email": "test@example.com",
+  "password": "testproject",
+  "role": "employee"
+}
+
+Response: 
+{
+    "name": "Test User",
+    "email": "test@example.com",
+    "password": "$2b$08$sX/JpgafPFk5.pFEZsR0ZOfUHQh/u8qOcD42jIsTen.juMt27ugbu",
+    "role": "employee",
+    "_id": "67599e8191eb8bb5cc2e6025",
+    "createdAt": "2024-12-11T14:15:29.303Z",
+    "updatedAt": "2024-12-11T14:15:29.303Z",
+    "__v": 0
+}
+
+
+*******************************************
+
+Idea Post: http://localhost:3001/api/ideas
+Type: POST
+Saves in ideas table
+
+Request: 
+{
+    "content": "This is a test idea.",
+    "author": "67599e8191eb8bb5cc2e6025"
+}
+
+Response: 
+{
+    "content": "This is a test idea.",
+    "author": "67599e8191eb8bb5cc2e6025",
+    "votes": 0,
+    "voters": [],
+    "status": "Idea Pending",
+    "_id": "67599fe391eb8bb5cc2e6029",
+    "comments": [],
+    "createdAt": "2024-12-11T14:21:23.567Z",
+    "updatedAt": "2024-12-11T14:21:23.567Z",
+    "__v": 0
+}
+
+
+*******************************************
+
+Idea Status Change: http://localhost:3001/api/ideas/<idea_id>/status => http://localhost:3001/api/ideas/67599fe391eb8bb5cc2e6029/status
+Type: PATCH
+Saves in ideas.status field
+
+Request: 
+{
+    "status": "Idea in Progress"
+}
+
+Response: 
+{
+    // Everything else same as before
+    "status": "Idea in Progress",
+}
+
+
+*******************************************
+
+Idea Vote: http://localhost:3001/api/ideas/<idea_id>/vote => http://localhost:3001/api/ideas/67599fe391eb8bb5cc2e6029/vote
+Type: POST
+Saves in ideas.vote and ideas.voters field
+
+Request: 
+{
+  "userId": "67599e8191eb8bb5cc2e6025"
+}
+
+Response: 
+{
+    // Everything else same as before
+    "votes": 1,
+    "voters": [
+        "67599e8191eb8bb5cc2e6025"
+    ],
+}
+
+
+*******************************************
+
+Idea comment: http://localhost:3001/api/ideas/<idea_id>/comment => http://localhost:3001/api/ideas/67599fe391eb8bb5cc2e6029/comment
+Type: POST
+Saves in ideas.comments field
+
+Request: 
+{
+    "comment": "My awesome comment",
+    "userId": "67599e8191eb8bb5cc2e6025"
+}
+
+Response: 
+{
+    // Everything else same as before
+        "comments": [
+        {
+            "comment": "My awesome comment",
+            "commentBy": "67599e8191eb8bb5cc2e6025",
+            "_id": "6759a26191eb8bb5cc2e6030"
+        }
+    ],
+}
+
+
+*******************************************
+
+Idea Evaluation: http://localhost:3001/api/ideas/<idea_id>/evaluate => http://localhost:3001/api/ideas/67599fe391eb8bb5cc2e6029/evaluate
+Type: POST
+Saves in ideas.evaluation field
+
+Request: 
+{
+    "score": 9,
+    "report": "https://drive.google.com/file/d/1YBEQ-a2miXAcEBUjKF7XQTmP7PVhGoVA/view?usp=sharing",
+    "userId": "6759ac467526c4228e28de6d" // New user with innovation role
+}
+
+Response: 
+{
+    // Everything else same as before
+    "evaluation": {
+    "score": 9,
+    "report": "https://drive.google.com/file/d/1YBEQ-a2miXAcEBUjKF7XQTmP7PVhGoVA/view?usp=sharing"
+    },
+}
