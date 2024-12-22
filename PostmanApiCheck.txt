@@ -25,6 +25,35 @@ Response:
 
 *******************************************
 
+
+Login: http://localhost:3001/api/users/login
+Type: POST
+Saves in users table
+
+Requst:
+{
+  "email": "test@promise.com",
+  "password": "lollollollol"
+}
+
+Response: 
+{
+    "message": "Login successful",
+    "user": {
+        "_id": "6767d390bf0125d1ea0c9173",
+        "name": "Promise Ghosh Chowdhury",
+        "email": "test@promise.com",
+        "password": "$2b$08$rZ28LW337kzm30H4W3KWIOTa1RWb6wKMug.5P/.A.KgMhp.7MXKPu",
+        "role": "employee",
+        "createdAt": "2024-12-22T08:53:36.866Z",
+        "updatedAt": "2024-12-22T08:53:36.866Z",
+        "__v": 0
+    }
+}
+
+
+*******************************************
+
 Idea Post: http://localhost:3001/api/ideas
 Type: POST
 Saves in ideas table
@@ -47,6 +76,53 @@ Response:
     "createdAt": "2024-12-11T14:21:23.567Z",
     "updatedAt": "2024-12-11T14:21:23.567Z",
     "__v": 0
+}
+
+
+*******************************************
+
+
+
+Get Ideas: http://localhost:3001/api/ideas
+params: http://localhost:3001/api/ideas?page=2&limit=10&search=innovation
+Type: GET
+Gets from Ideas table
+
+Response: 
+{
+    "ideas": [
+        {
+            "_id": "6768168de6683f65ea38e3ea",
+            "content": "Life is beautiful only a few time. So we should cherish it more.",
+            "author": "6767d390bf0125d1ea0c9173",
+            "category": "Travel",
+            "banner": "https://drive.google.com/file/d/15z9mVsPQQbEKi-F0FcGbVKUNSmslXhqR/view?usp=drive_link",
+            "votes": 0,
+            "voters": [],
+            "status": "Idea Pending",
+            "comments": [],
+            "createdAt": "2024-12-22T13:39:25.198Z",
+            "updatedAt": "2024-12-22T13:39:25.198Z",
+            "__v": 0
+        },
+        {
+            "_id": "6768152fe6683f65ea38e3e8",
+            "content": "AI is the newest and final evolution of mankind",
+            "author": "6767d390bf0125d1ea0c9173",
+            "category": "Artificial Intelligence",
+            "banner": "https://drive.google.com/file/d/1ADRB2lksomsTo4Kii1zi-_UKea-xo3LA/view?usp=sharing",
+            "votes": 0,
+            "voters": [],
+            "status": "Idea Pending",
+            "comments": [],
+            "createdAt": "2024-12-22T13:33:35.673Z",
+            "updatedAt": "2024-12-22T13:33:35.673Z",
+            "__v": 0
+        }
+    ],
+    "totalIdeas": 2,
+    "currentPage": 1,
+    "totalPages": 1
 }
 
 
@@ -134,4 +210,99 @@ Response:
     "score": 9,
     "report": "https://drive.google.com/file/d/1YBEQ-a2miXAcEBUjKF7XQTmP7PVhGoVA/view?usp=sharing"
     },
+}
+
+
+*******************************************
+
+Admin can change user role: http://localhost:3001/api/users/change-role
+Type: PATCH
+Saves in users.role field
+
+Request: 
+{
+    "adminID": "67681f9bfd81549406101d10",
+    "userEmailToBeChanged": "second@test.com",
+    "newRole": "regional"
+}
+
+Response: 
+{
+    // Everything else same as before
+    "role": "regional",
+}
+
+
+*******************************************
+
+Assign role for idea collaborators (For regional managers):http://localhost:3001/api/ideas/<Idea Id>/assign-role => http://localhost:3001/api/ideas/6768152fe6683f65ea38e3e8/assign-role
+Type: PATCH
+Saves in idea.collaborators field
+
+Request: 
+{
+  "collaboratorEmail": "collaborator@example.com", // The email of the collaborator
+  "newRole": "Developer", // The role to assign
+  "userId": "id of regional user" //Send the id of regional user
+}
+
+Response: 
+{
+    // Everything else same as before
+    "role": "regional",
+}
+
+
+*******************************************
+
+Collaboration Request in an idea:http://localhost:3001/api/ideas/<Idea Id>/req-collaboration => http://localhost:3001/api/ideas/6768152fe6683f65ea38e3e8/req-collaboration
+Type: POST
+Saves in idea.collaborators field
+
+Request: 
+{
+  "_id": "67682aaae307037022819a22",
+  "name": "Regional Promise",
+  "email": "promise@regional.com"
+}
+
+Response: 
+{
+    // Everything else same as before
+    "collaborators": [
+        {
+            "user": "67682aaae307037022819a22",
+            "name": "Regional Promise",
+            "email": "promise@regional.com",
+            "role": "General",
+            "_id": "67682f7380a70c9e677be4bf"
+        }
+    ]
+}
+
+
+*******************************************
+
+Accept / Decline Collaboration Request in an idea: http://localhost:3001/api/ideas/:ideaId/collaborators/:collaboratorId => http://localhost:3001/api/ideas/6768152fe6683f65ea38e3e8/req-collaboration
+Type: PATCH
+Saves in idea.collaborators field
+
+Request: 
+{
+  "action": "accept" // or "decline"
+}
+
+Response: 
+{
+    // Everything else same as before
+    "collaborators": [
+        {
+            "user": "67682aaae307037022819a22",
+            "name": "Regional Promise",
+            "email": "promise@regional.com",
+            "role": "General",
+            "_id": "67682f7380a70c9e677be4bf"
+            status: "Accepted" || removed from the list
+        }
+    ]
 }

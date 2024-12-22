@@ -11,6 +11,14 @@ const ideaSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    category: {
+      type: String,
+      required: true,
+    },
+    banner: {
+      type: String,
+      required: true,
+    },
     votes: {
       type: Number,
       default: 0,
@@ -31,6 +39,33 @@ const ideaSchema = new mongoose.Schema(
           type: mongoose.Schema.Types.ObjectId,
           ref: "User",
           required: true,
+        },
+      },
+    ],
+    collaborators: [
+      {
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true,
+        },
+        name: { type: String, required: true },
+        email: { type: String, required: true },
+        role: {
+          type: String,
+          enum: [
+            "General",
+            "Team Leader",
+            "Researcher",
+            "Developer",
+            "Designer",
+            "Analyst",
+          ],
+        },
+        status: {
+          type: String,
+          enum: ["Pending", "Accepted"],
+          default: "Pending",
         },
       },
     ],

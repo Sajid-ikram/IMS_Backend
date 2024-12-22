@@ -10,6 +10,28 @@ const createIdea = async (req, res) => {
   }
 };
 
+const getAllIdeas = async (req, res) => {
+  try {
+    const { page, limit, search } = req.query; //get from query string
+
+    const { ideas, totalIdeas } = await ideaService.getIdeas(
+      page,
+      limit,
+      search
+    );
+
+    res.json({
+      ideas,
+      totalIdeas,
+      currentPage: parseInt(page) || 1,
+      totalPages: Math.ceil(totalIdeas / (parseInt(limit) || 12)),
+    });
+  } catch (error) {
+    console.error("Error in getAllIdeas controller:", error);
+    res.status(500).json({ error: error.message || "Failed to fetch ideas" }); //send error
+  }
+};
+
 const voteIdea = async (req, res) => {
   try {
     const { ideaId } = req.params; // Get the ideaId from the URL parameters
@@ -86,10 +108,116 @@ const evaluateIdea = async (req, res) => {
   }
 };
 
+const assignRole = async (req, res) => {
+  try {
+    const { ideaId } = req.params;
+    const { collaboratorEmail, newRole } = req.body; //Receive these two from the req body
+    const regionalUserId = req.user._id; // Get the regional user's ID (make sure your authentication middleware sets req.user)
+
+    if (!collaboratorEmail || !newRole) {
+      // Input validation
+      return res
+        .status(400)
+        .json({ error: "Both collaboratorEmail and newRole is required" });
+    }
+
+    const updatedIdea = await ideaService.assignCollaboratorRole(
+      regionalUserId,
+      ideaId,
+      collaboratorEmail,
+      newRole
+    );
+
+    res.json(updatedIdea); //Return the updated idea
+  } catch (error) {
+    console.error("Error assigning collaborator role:", error);
+    res.status(400).json({ error: error.message || "Failed to assign role." });
+  }
+};
+
+const addCollaborator = async (req, res) => {
+  try {
+    const { ideaId } = req.params;
+    const collaborator = req.body; // Get collaborator data from the request body
+
+    if (!collaborator) {
+      return res
+        .status(400)
+        .json({ error: "Collaborator's information not found" });
+    }
+
+    const updatedIdea = await ideaService.addCollaborator(ideaId, collaborator);
+    res.status(200).json(updatedIdea);
+  } catch (error) {
+    console.error("Error adding collaborator:", error);
+    res
+      .status(500)
+      .json({ error: error.message || "Failed to add collaborator." });
+  }
+};
+
+const getCollaborators = async (req, res) => {
+  try {
+    const { ideaId } = req.params;
+
+    const collaborators = await ideaService.getIdeaCollaborators(ideaId);
+
+    res.json(collaborators); //collaborators list in response
+  } catch (error) {
+    res
+      .status(404)
+      .json({ error: error.message || "Failed to get collaborators" });
+  }
+};
+
+const respondToCollaborationRequest = async (req, res) => {
+  try {
+    const { ideaId } = req.params;
+    const { collaboratorId, action } = req.body;
+    const authorId = req.user._id; // Get the author's ID from the authenticated user
+
+    if (!collaboratorId || !action) {
+      return res
+        .status(400)
+        .json({ error: "Collaborator ID and action are required." });
+    }
+
+    const idea = await Idea.findById(ideaId);
+    if (!idea) {
+      return res.status(404).json({ error: "Idea not found" });
+    }
+
+    if (idea.author.toString() !== authorId.toString()) {
+      //Check if he is the author
+      return res.status(403).json({
+        error: "Only the author can respond to collaboration requests",
+      });
+    }
+
+    const updatedIdea = await ideaService.handleCollaborationRequest(
+      ideaId,
+      collaboratorId,
+      action
+    );
+
+    res.json(updatedIdea);
+  } catch (error) {
+    console.error("Error responding to collaboration request:", error);
+    res.status(400).json({
+      error: error.message || "Failed to respond to collaboration request.",
+    });
+  }
+};
+
 export default {
   createIdea,
+  getAllIdeas,
   voteIdea,
   commentOnIdea,
   updateIdeaStatus,
   evaluateIdea,
+  assignRole,
+  addCollaborator,
+  getCollaborators,
+  respondToCollaborationRequest,
 };
