@@ -36,9 +36,15 @@ const userSchema = new mongoose.Schema(
     role: {
       // Add the role field
       type: String,
-      enum: ["employee", "innovation", "regional", "admin"], // Define allowed roles
-      default: "employee",
+      enum: ["Employee", "Innovation", "Regional", "Admin"], // Define allowed roles
+      default: "Employee",
     },
+    postedIdeas: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Idea",
+      },
+    ],
   },
   {
     timestamps: true,

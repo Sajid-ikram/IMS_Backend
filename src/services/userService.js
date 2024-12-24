@@ -7,6 +7,19 @@ const createUser = async (userData) => {
   return user;
 };
 
+const getUserDetails = async (userId) => {
+  try {
+    const user = await User.findById(userId).select("name postedIdeas"); // Select only the necessary fields
+
+    if (!user) {
+      throw new Error("Author not found");
+    }
+    return user;
+  } catch (error) {
+    throw error;
+  }
+};
+
 const loginUser = async (email, password) => {
   try {
     const user = await User.findOne({ email });
@@ -27,15 +40,15 @@ const loginUser = async (email, password) => {
   }
 };
 
-const changeUserRole = async (adminId, userEmailToBeChanged, newRole) => {
+const changeUserRole = async (userId, userEmailToBeChanged, newRole) => {
   try {
-    const adminUser = await User.findById(adminId); // Find admin by ID
+    const adminUser = await User.findById(userId); // Find admin by ID
 
     if (!adminUser) {
       throw new Error("Admin user not found");
     }
 
-    if (adminUser.role !== "admin") {
+    if (adminUser.role !== "Admin") {
       throw new Error("Only admins can change user roles.");
     }
 
@@ -55,4 +68,4 @@ const changeUserRole = async (adminId, userEmailToBeChanged, newRole) => {
   }
 };
 
-export default { createUser, loginUser, changeUserRole };
+export default { createUser, getUserDetails, loginUser, changeUserRole };

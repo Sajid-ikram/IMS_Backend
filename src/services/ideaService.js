@@ -2,9 +2,40 @@ import Idea from "../models/Idea.js";
 import User from "../models/User.js";
 
 const createIdea = async (ideaData) => {
-  const idea = new Idea(ideaData);
-  await idea.save();
-  return idea;
+  try {
+    const { author } = ideaData;
+    const user = await User.findById(author);
+    if (!user) {
+      throw new Error("User not found");
+    }
+    const idea = new Idea(ideaData);
+    await idea.save();
+
+    const updatedUser = await User.findByIdAndUpdate(
+      author,
+      {
+        $push: { postedIdeas: idea._id },
+      },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      throw new Error("User not found for updating the idea.");
+    }
+
+    return idea;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const getUserPostedIdeas = async (userId) => {
+  try {
+    const ideas = await Idea.find({ author: userId }); // Find ideas where author matches userId
+    return ideas;
+  } catch (error) {
+    throw error;
+  }
 };
 
 const getIdeas = async (page = 1, limit = 12, search) => {
@@ -26,6 +57,19 @@ const getIdeas = async (page = 1, limit = 12, search) => {
   } catch (error) {
     console.log(error.message);
     throw new Error("Failed to fetch ideas.");
+  }
+};
+
+const getIdeaDetails = async (ideaId) => {
+  try {
+    const idea = await Idea.findById(ideaId);
+
+    if (!idea) {
+      throw new Error("Idea not found");
+    }
+    return idea;
+  } catch (error) {
+    throw error;
   }
 };
 
@@ -177,15 +221,28 @@ const addCollaborator = async (ideaId, collaborator) => {
       throw new Error("Idea not found");
     }
 
+    const collaboratorExists = idea.collaborators.some(
+      (c) => c.user.toString() === collaborator._id.toString()
+    );
+
+    if (collaboratorExists) {
+      throw new Error("User already requested for collaboration");
+    }
+
+    const user = await User.findById(collaborator._id);
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
     const collaboratorToAdd = {
       user: collaborator._id,
       name: collaborator.name,
       email: collaborator.email,
-      role: "General", // Default role
+      role: collaborator.role || "General", // Default role
     };
 
     idea.collaborators.push(collaboratorToAdd);
-
     await idea.save();
     return idea;
   } catch (error) {
@@ -195,33 +252,52 @@ const addCollaborator = async (ideaId, collaborator) => {
 
 const getIdeaCollaborators = async (ideaId) => {
   try {
-    const idea = await Idea.findById(ideaId).populate(
-      "collaborators.user",
-      "name, email, role"
-    ); //populate
+    const idea = await Idea.findById(ideaId)
+      .populate("collaborators.user", "name, email, role, status, _id")
+      .populate("author", "name, _id, email, role"); // Populate the author field
+
     if (!idea) {
       throw new Error("Idea not found");
     }
 
     // Extract just the necessary collaborator information to send.
-
     const collaborators = idea.collaborators.map((collaborator) => ({
+      user: collaborator.user?._id,
       name: collaborator.name,
       email: collaborator.email,
       role: collaborator.role,
+      status: collaborator.status,
+      _id: collaborator._id,
     }));
 
-    return collaborators;
+    return {
+      author: {
+        _id: idea.author._id,
+        name: idea.author.name,
+        email: idea.author.email,
+        role: idea.author.role,
+      },
+      collaborators,
+    };
   } catch (error) {
     throw error;
   }
 };
 
-const handleCollaborationRequest = async (ideaId, collaboratorId, action) => {
+const handleCollaborationRequest = async (
+  ideaId,
+  collaboratorId,
+  action,
+  authorId
+) => {
   try {
     const idea = await Idea.findById(ideaId);
     if (!idea) {
       throw new Error("Idea not found");
+    }
+
+    if (idea.author.toString() !== authorId.toString()) {
+      throw new Error("Only the author can respond to collaboration requests");
     }
 
     const collaboratorIndex = idea.collaborators.findIndex(
@@ -234,10 +310,10 @@ const handleCollaborationRequest = async (ideaId, collaboratorId, action) => {
 
     if (action === "accept") {
       idea.collaborators[collaboratorIndex].status = "Accepted";
-    } else if (action === "decline") {
+    } else if (action === "reject") {
       idea.collaborators.splice(collaboratorIndex, 1); // Remove collaborator
     } else {
-      throw new Error('Invalid action. Must be "accept" or "decline".');
+      throw new Error('Invalid action. Must be "accept" or "reject".');
     }
 
     await idea.save();
@@ -251,7 +327,9 @@ const handleCollaborationRequest = async (ideaId, collaboratorId, action) => {
 
 export default {
   createIdea,
+  getUserPostedIdeas,
   getIdeas,
+  getIdeaDetails,
   voteIdea,
   commentOnIdea,
   updateIdeaStatus,

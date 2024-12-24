@@ -10,6 +10,21 @@ const createIdea = async (req, res) => {
   }
 };
 
+const getUserIdeas = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const ideas = await ideaService.getUserPostedIdeas(userId); // Call the idea service
+    res.json(ideas);
+  } catch (error) {
+    console.error("Error fetching ideas by user ID:", error); // Enhanced logging
+
+    res
+      .status(500)
+      .json({ error: error.message || "Failed to fetch user's ideas" });
+  }
+};
+
 const getAllIdeas = async (req, res) => {
   try {
     const { page, limit, search } = req.query; //get from query string
@@ -29,6 +44,21 @@ const getAllIdeas = async (req, res) => {
   } catch (error) {
     console.error("Error in getAllIdeas controller:", error);
     res.status(500).json({ error: error.message || "Failed to fetch ideas" }); //send error
+  }
+};
+
+const getIdea = async (req, res) => {
+  try {
+    const { ideaId } = req.params;
+
+    const idea = await ideaService.getIdeaDetails(ideaId);
+
+    res.json(idea);
+  } catch (error) {
+    console.error("Error fetching idea details", error);
+    res
+      .status(404)
+      .json({ error: error.message || "Failed to fetch idea details" });
   }
 };
 
@@ -71,8 +101,8 @@ const updateIdeaStatus = async (req, res) => {
 const commentOnIdea = async (req, res) => {
   try {
     const { ideaId } = req.params;
-    const { userId } = req.body;
-    const { comment } = req.body;
+    const { userId, userName, comment } = req.body;
+    // const { comment } = req.body;
 
     //Validation: Critical - check if userId is a valid ObjectId.
     if (!mongoose.Types.ObjectId.isValid(userId)) {
@@ -82,6 +112,7 @@ const commentOnIdea = async (req, res) => {
     const commentData = {
       comment,
       commentBy: userId,
+      commentor: userName,
     };
 
     const updatedIdea = await ideaService.commentOnIdea(ideaId, commentData);
@@ -173,34 +204,27 @@ const getCollaborators = async (req, res) => {
 const respondToCollaborationRequest = async (req, res) => {
   try {
     const { ideaId } = req.params;
-    const { collaboratorId, action } = req.body;
-    const authorId = req.user._id; // Get the author's ID from the authenticated user
+    const { collaboratorId, action, authorId } = req.body;
 
     if (!collaboratorId || !action) {
       return res
         .status(400)
         .json({ error: "Collaborator ID and action are required." });
     }
-
-    const idea = await Idea.findById(ideaId);
-    if (!idea) {
-      return res.status(404).json({ error: "Idea not found" });
+    if (action !== "accept" && action !== "reject") {
+      return res
+        .status(400)
+        .json({ error: 'Invalid action. Must be "accept" or "reject".' });
     }
 
-    if (idea.author.toString() !== authorId.toString()) {
-      //Check if he is the author
-      return res.status(403).json({
-        error: "Only the author can respond to collaboration requests",
-      });
-    }
-
-    const updatedIdea = await ideaService.handleCollaborationRequest(
+    const idea = await ideaService.handleCollaborationRequest(
       ideaId,
       collaboratorId,
-      action
+      action,
+      authorId
     );
 
-    res.json(updatedIdea);
+    res.json(idea);
   } catch (error) {
     console.error("Error responding to collaboration request:", error);
     res.status(400).json({
@@ -211,7 +235,9 @@ const respondToCollaborationRequest = async (req, res) => {
 
 export default {
   createIdea,
+  getUserIdeas,
   getAllIdeas,
+  getIdea,
   voteIdea,
   commentOnIdea,
   updateIdeaStatus,

@@ -2,6 +2,10 @@ import mongoose from "mongoose";
 
 const ideaSchema = new mongoose.Schema(
   {
+    title: {
+      type: String,
+      required: true,
+    },
     content: {
       type: String,
       required: true,
@@ -13,7 +17,7 @@ const ideaSchema = new mongoose.Schema(
     },
     category: {
       type: String,
-      required: true,
+      // required: true,
     },
     banner: {
       type: String,
@@ -38,6 +42,10 @@ const ideaSchema = new mongoose.Schema(
         commentBy: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "User",
+          required: true,
+        },
+        commentor: {
+          type: String,
           required: true,
         },
       },
@@ -71,7 +79,7 @@ const ideaSchema = new mongoose.Schema(
     ],
     status: {
       type: String,
-      enum: ["Idea Pending", "Idea in Progress", "Idea Being Evaluated"], // Allowed values
+      enum: ["Idea Pending", "Idea in Progress", "Idea Evaluated"], // Allowed values
       default: "Idea Pending", // Initial status
     },
     evaluation: {

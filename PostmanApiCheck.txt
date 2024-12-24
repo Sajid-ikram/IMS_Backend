@@ -128,7 +128,7 @@ Response:
 
 *******************************************
 
-Idea Status Change: http://localhost:3001/api/ideas/<idea_id>/status => http://localhost:3001/api/ideas/67599fe391eb8bb5cc2e6029/status
+Idea Status Change: http://localhost:3001/api/ideas/<ideaId>/status => http://localhost:3001/api/ideas/67599fe391eb8bb5cc2e6029/status
 Type: PATCH
 Saves in ideas.status field
 
